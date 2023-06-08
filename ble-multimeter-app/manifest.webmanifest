@@ -1,0 +1,17 @@
+{
+  "name": "BLE DMM",
+  "short_name": "BLE DMM",
+  "description": "BLE Multimeter App",
+  "scope": "/MP730624_tools/ble-multimeter-app/",
+  "start_url": "/MP730624_tools/ble-multimeter-app/",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "display": "standalone", 
+  "icons": [
+      {
+        "src": "/MP730624_tools/ble-multimeter-app/icon.png",
+        "type": "image/png",
+        "sizes": "700x700"
+      }
+  ]
+}

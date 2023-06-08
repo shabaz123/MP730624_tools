@@ -1,0 +1,542 @@
+<!doctype html>
+<!--
+BLE Multimeter App for MP730624
+JavaScript version by shabaz June 2023
+Decoder based on Python code from baldengineer
+-->
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="Multimeter">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="canonical" href="https://shabaz123.github.io/MP730624_tools/ble-multimeter-app" />
+    <link rel="manifest" href="/MP730624_tools/ble-multimeter-app/manifest.webmanifest">
+
+    <title>Multimeter</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous" />
+    <link rel="stylesheet" href="style.css" />
+    <style type="text/css" media="screen">
+        .bodyStyle {
+            background: #2a415d;
+            font-family: "Trebuchet MS", "Lucida Sans Unicode", "Lucida Grande", "Lucida Sans", Arial,
+                sans-serif;
+        }
+
+        h1 {
+            color: #ffffff;
+        }
+
+        ::-webkit-scrollbar {
+            width: 15px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: orange;
+            border-radius: 15px;
+        }
+
+        #units {
+            border: 0;
+            font-size: 1.25rem;
+            font-weight: 300;
+            vertical-align: baseline;
+            margin: 0;
+            padding: 0;
+            color: #b0b0b0;
+        }
+
+        #id_topstatus {
+            border: 0;
+            font-size: 100%;
+            font: inherit;
+            vertical-align: baseline;
+            margin: 0;
+            padding: 0;
+            color: #b0b0b0;
+        }
+
+        #id_logtitle_check {
+            display: flex;
+            justify-content: center;
+        }
+
+        #id_logtitle {
+            border: 0;
+            font-size: 100%;
+            font: inherit;
+
+            margin: 50px;
+            padding: 0;
+            color: #b0b0b0;
+            align-self: space-between;
+        }
+
+        #id_check {
+            border: 0;
+            font-size: 100%;
+            font: inherit;
+
+            margin: 0;
+            padding: 0;
+            color: #b0b0b0;
+        }
+
+        .jumbotron {
+            position: relative;
+            text-align: center;
+            background-color: #313131;
+            width: 360px;
+            height: 120px;
+            border: 1px solid #ffffff;
+            border-radius: 0.5rem;
+            display: inline-block;
+        }
+
+        #id_meter1_value {
+            background-color: #313131;
+            font-size: 360%;
+        }
+
+        #output {
+            overflow: auto;
+            font-size: 0.875rem;
+            height: 200px;
+            width: 360px;
+            text-align: left;
+            background-color: #f0f0f0;
+            border-radius: 0.75em;
+            display: block;
+            margin: auto;
+            padding: 0.5em;
+
+
+        }
+
+        #status {
+            margin: .5em 0;
+            font-style: italic;
+        }
+
+        #log {
+            margin: .5em 0;
+            white-space: pre-wrap;
+        }
+    </style>
+    <script>
+        if (navigator.serviceWorker) {
+            navigator.serviceWorker.register(
+                '/MP730624_tools/ble-multimeter-app/sw.js',
+                { scope: '/MP730624_tools/ble-multimeter-app/' }
+            )
+        }
+    </script>
+    <script>
+        // Add a global error event listener early on in the page load, to help ensure that browsers
+        // which don't support specific functionality still end up displaying a meaningful message.
+        window.addEventListener('error', function (error) {
+            if (ChromeSamples && ChromeSamples.setStatus) {
+                console.error(error);
+                ChromeSamples.setStatus(error.message + ' (Your browser may not support this feature.)');
+                error.preventDefault();
+            }
+        });
+    </script>
+    <link rel="icon" href="icon.png">
+    <link rel="stylesheet" href="main.css">
+</head>
+
+<body class="bodyStyle">
+    <div class="container my-5">
+        <!--
+        <img class="pageIcon" src="icon.png">
+        <h1>Remote DMM Viewer</h1>
+        <p>Remote Digital Multimeter Viewer</p>
+        <p>Click <b>Select Multimeter</b> and choose your device:</p>
+        -->
+
+        <!--
+        <script>
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('service-worker.js');
+            }
+        </script>
+        -->
+
+        <script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
+        <script type="text/javascript"></script>
+
+        <script>
+            window.addEventListener('DOMContentLoaded', function () {
+                const searchParams = new URL(location).searchParams;
+                const inputs = Array.from(document.querySelectorAll('input[id]'));
+
+                inputs.forEach(input => {
+                    if (searchParams.has(input.id)) {
+                        if (input.type == 'checkbox') {
+                            input.checked = searchParams.get(input.id);
+                        } else {
+                            input.value = searchParams.get(input.id);
+                            input.blur();
+                        }
+                    }
+                    if (input.type == 'checkbox') {
+                        input.addEventListener('change', function (event) {
+                            const newSearchParams = new URL(location).searchParams;
+                            if (event.target.checked) {
+                                newSearchParams.set(input.id, event.target.checked);
+                            } else {
+                                newSearchParams.delete(input.id);
+                            }
+                            history.replaceState({}, '', Array.from(newSearchParams).length ?
+                                location.pathname + '?' + newSearchParams : location.pathname);
+                        });
+                    } else {
+                        input.addEventListener('input', function (event) {
+                            const newSearchParams = new URL(location).searchParams;
+                            if (event.target.value) {
+                                newSearchParams.set(input.id, event.target.value);
+                            } else {
+                                newSearchParams.delete(input.id);
+                            }
+                            history.replaceState({}, '', Array.from(newSearchParams).length ?
+                                location.pathname + '?' + newSearchParams : location.pathname);
+                        });
+                    }
+                });
+            });
+        </script>
+
+
+
+
+
+
+        <script>
+            var ChromeSamples = {
+                log: function () {
+                    var line = Array.prototype.slice.call(arguments).map(function (argument) {
+                        return typeof argument === 'string' ? argument : JSON.stringify(argument);
+                    }).join(' ');
+
+                    document.querySelector('#log').textContent += line + '\n';
+                },
+
+                clearLog: function () {
+                    document.querySelector('#log').textContent = '';
+                },
+
+                setStatus: function (status) {
+                    document.querySelector('#status').textContent = status;
+                },
+
+                setContent: function (newContent) {
+                    var content = document.querySelector('#content');
+                    while (content.hasChildNodes()) {
+                        content.removeChild(content.lastChild);
+                    }
+                    content.appendChild(newContent);
+                }
+            };
+        </script>
+
+
+        <div id="id_topstatus" class="text-center my-1">MP730624 Digital Multimeter 1</div>
+        <div class="text-center">
+            <div id="meterbox" class="jumbotron">
+                <h1 id="id_meter1_value" class="display-1 my-1">0</h1>
+                <p class="lead" id="units">-</p>
+            </div>
+        </div>
+
+        <div class="m-4 text-center">
+            <button id="selDevice" class="btn btn-success mx-2">Meter Sel</button>
+            <button id="reset" class="btn btn-success mx-2" disabled=true>BLE Reset</button>
+            <button id="clr" class="btn btn-success mx-2">Clear Log</button>
+        </div>
+
+        <div class="m-4 text-center">
+            <table id="id_logtitle_check">
+                <tr>
+                    <td>
+                        <div id="id_logtitle" class="text-center my-1 align-middle">Data Log</div>
+                    </td>
+                    <td>
+                        <div id="id_check" class="form-check align-middle">
+                            <input class="form-check-input align-middle" type="checkbox" value="" id="id_scrollcheck"
+                                checked>
+                            <label class="form-check-label align-middle" for="id_scrollcheck">
+                                Auto-scroll
+                            </label>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+
+
+
+
+            <div id="output" class="output">
+                <div id="content"></div>
+                <div id="status"></div>
+                <pre id="log"></pre>
+            </div>
+        </div>
+
+        <script>
+            if (/Chrome\/(\d+\.\d+.\d+.\d+)/.test(navigator.userAgent)) {
+                if (45 > parseInt(RegExp.$1)) {
+                    ChromeSamples.setStatus('Warning: Tested with Chrome ' + 45 + '.');
+                }
+            }
+        </script>
+
+
+        <script>
+            var bluetoothDevice;
+            var SendReqCharacteristic;
+            var GetResCharacteristic;
+
+            var nodataTimer = null;
+            
+            var dialcode_arr = [25840, 25584, 25328, 25072, 26608,
+                9456, 9200, 8944, 8688, 10224,
+                23536, 23280, 24560,
+                7152, 6896, 8176,
+                13553, 13297, 13041, 14321,
+                8945, 10225,
+                11505, 11249, 10993, 12273,
+                58098, 59378,
+                42226, 42994,
+                19697, 19441, 19185, 21745, 21489, 21233, 23793, 23537, 24561,
+                8690, 25074,
+                24819,
+                54000, 53744, 37616, 37360, 38896, 55280,
+                56304, 56048, 39920, 39664, 40944, 57328,
+                58352, 41968,
+                41713, 44273, 44017, 43761, 46321, 46065
+                ];
+
+            var dialdecode_arr = ["ACV,V,1,2 V", "ACV,V,2,20 V", "ACV,V,3,200 V", "ACV,V,4,750 V", "ACV,over,1",
+                "DCV,V,1,2 V", "DCV,V,2,20 V", "DCV,V,3,200 V", "DCV,V,4,1000 V", "DCV,over,1",
+                "ACV,mV,2,20 mV", "ACV,mV,3,200 mV", "ACV,over,0",
+                "DCV,mV,2,20 mV", "DCV,mV,3,200 mV", "DCV,over,0",
+                "RES,Mohm,1,2 Mohm", "RES,Mohm,2,20 Mohm", "RES,Mohm,3,200 Mohm", "RES,over,0",
+                "RES,ohm,3,200 ohm", "RES,over,1",
+                "RES,kohm,1,2 kohm", "RES,kohm,2,20 kohm", "RES,kohm,3,200 kohm", "RES,over,2",
+                "CONT,ohm,3", "CONT,over,4",
+                "DIODE,V,1", "DIODE,over,1",
+                "CAP,nF,1,2 nF", "CAP,nF,2,20 nF", "CAP,nF,3,200 nF", "CAP,uF,1,2 uF", "CAP,uF,2,20 uF", "CAP,uF,3,200 uF", "CAP,mF,1,2 mF", "CAP,mF,2,20 mF", "CAP,over,0",
+                "TEMP,degC,4,400 C", "TEMP,degF,4,750 F",
+                "NCV,sp,4",
+                "ACI,uA,3,200 uA", "ACI,uA,4,2000 uA", "DCI,uA,3,200 uA", "DCI,uA,4,2000 uA", "DCI,over,1", "ACI,over,1",
+                "ACI,mA,2,20 mA", "ACI,mA,3,200 mA", "DCI,mA,2,20 mA", "DCI,mA,3,200 mA", "DCI,over,0", "ACI,over,0",
+                "ACI,A,2,20 A", "DCI,A,2,20 A",
+                "FREQ,Hz,3,200 Hz", "FREQ,kHz,1,2 kHz", "FREQ,kHz,2,20 kHz", "FREQ,kHz,3,200 kHz", "FREQ,MHz,1,2 MHz", "FREQ,MHz,2,20 MHz"
+            ];
+
+            var dial = {};
+
+            var scroll_check = document.getElementById("id_scrollcheck");
+
+            for (var i = 0; i < dialcode_arr.length; i++) {
+                dial[dialcode_arr[i]] = dialdecode_arr[i];
+            }
+
+            id_meter1_value.textContent = "----";
+
+            async function onSelDeviceButtonClick() {
+                try {
+                    if (!bluetoothDevice) {
+                        await requestDevice();
+                    }
+                    await connectDeviceAndCacheCharacteristics();
+                } catch (error) {
+                    log('Error: ' + error);
+                }
+            }
+
+            async function requestDevice() {
+                log('Requesting any Bluetooth Device...');
+                bluetoothDevice = await navigator.bluetooth.requestDevice({
+                    filters: [
+                        { services: ["0000fff0-0000-1000-8000-00805f9b34fb"] },
+                    ],
+                    //acceptAllDevices: true,
+                    optionalServices: ['0000fff0-0000-1000-8000-00805f9b34fb']
+                });
+                bluetoothDevice.addEventListener('gattserverdisconnected', onDisconnected);
+            }
+
+            async function connectDeviceAndCacheCharacteristics() {
+                if (bluetoothDevice.gatt.connected && SendReqCharacteristic) {
+                    return;
+                }
+                log('Connecting to GATT Server...');
+                const server = await bluetoothDevice.gatt.connect();
+                log('Getting Primary Service...');
+                const service = await server.getPrimaryService('0000fff0-0000-1000-8000-00805f9b34fb');
+                log('Getting SendReq Characteristic...');
+                SendReqCharacteristic = await service.getCharacteristic('0000fff4-0000-1000-8000-00805f9b34fb');
+                log('Add Event Handler for Notifications...');
+                SendReqCharacteristic.addEventListener('characteristicvaluechanged', handleBleNotifications);
+                log('Start Notifications...');
+                SendReqCharacteristic.startNotifications();
+                log('Ready.');
+                document.querySelector('#selDevice').disabled = true;
+                document.querySelector('#reset').disabled = false;
+            }
+
+            function nodata_callback() {
+                id_meter1_value.textContent = "----";
+                units.textContent = " ";
+            }
+
+            function handleBleNotifications(event) {
+                if (nodataTimer != null) {
+                    clearTimeout(nodataTimer);
+                    nodataTimer = null;
+                }
+                const dateobj = new Date(); // get timestamp
+                do_overload = 0;
+                value = event.target.value;
+                vlen = value.byteLength;
+                dialcode = (value.getUint8(0) * 256) + value.getUint8(1);
+                // log('dialcode is ' + dialcode);
+                dialdecode = dial[dialcode]; // dialcode contains a string like "DCV,mV,2,60 mV"
+                try {
+                    if (dialdecode.search(",") == -1) { // catch any unexpected notifications
+                        return;
+                    }
+                } catch (err) {
+                    return;
+                }
+                temp_str = dialdecode.split(",");
+                meas_type = temp_str[0]; // e.g. DVC
+                meas_unit = temp_str[1]; // e.g. mV
+                meas_dp_pos = temp_str[2]; // decimal place from left. For example, 3 would mean xxx.x
+                meas_maxval = temp_str[3]; // max value string, for example '600 mV'
+                if ((typeof meas_maxval) == 'undefined') {
+                    meas_maxval = "";
+                }
+                //handle out of range for resistances:
+                if (meas_unit.search("over") > -1) {
+                    do_overload = 1;
+                    meas_unit = "";
+                }
+                // handle unknown measurement types that occasionally seem to appear when the dial is rotated:
+                if (meas_type.search("UNK") > -1) {
+                    return;
+                }
+                msbyte = value.getUint8(5);
+                lsbyte = value.getUint8(4);
+                rawmeas = (msbyte * 256) + lsbyte; // rawmeas is unsigned int
+                intmeas = rawmeas;
+                // log('rawmeas: ' + rawmeas + ', temp_str: ' + temp_str);
+                if (msbyte > 0x7f) {
+                    intmeas = 0xFFFF8000 | (intmeas & 0x7FFF); // intmeas is signed int
+                    rawmeas = rawmeas & 0x7fff;
+                }
+                // convert the measurement result into a string
+                //if ((intmeas > 32676) || (intmeas < -32676)) { 
+                //    log('intmeas is ' + intmeas + ' rawmeas is ' + rawmeas );
+                //}
+                if (do_overload > 0) { // overload
+                    meas_str = "Overload";
+                } else { // not overloaded
+                    temp_str = rawmeas.toString();
+                    temp_str = temp_str.padStart(5, '0');
+                    if (meas_dp_pos < 5) {
+                        meas_str = temp_str.slice(0, meas_dp_pos) + "." + temp_str.slice(meas_dp_pos);
+                        if (msbyte > 0x7f) { // negative value, prepend with a '-'
+                            meas_str = "-" + meas_str;
+                        }
+                    }
+                }
+                //log('dial ' + dialcode.toString(16) + ": " + dialdecode + ', meas: ' + meas_str + ' ' + meas_unit);
+                // log the output:
+                hr = ('00' + dateobj.getHours()).slice(-2);
+                min = ('00' + dateobj.getMinutes()).slice(-2);
+                sec = ('00' + dateobj.getSeconds()).slice(-2);
+                log(hr + ":" + min + ":" + sec + ",  " + meas_type + " [" + meas_maxval + "],  " + meas_str + " " + meas_unit);
+                if (scroll_check.checked == true) { // do auto-scroll
+                    var logDiv = document.getElementById("output");
+                    logDiv.scrollTop = logDiv.scrollHeight;
+                }
+                id_meter1_value.textContent = meas_str + " " + meas_unit;
+                units.textContent = meas_type + " " + meas_maxval;
+                nodataTimer = setTimeout(nodata_callback, 1000);
+            }
+
+            function onClrButtonClick() {
+                clearLog();
+            }
+
+            function onResetButtonClick() {
+                SendReqCharacteristic.removeEventListener('characteristicvaluechanged', handleBleNotifications);
+                GetResCharacteristic = null;
+                SendReqCharacteristic = null;
+                // Note that it doesn't disconnect device.
+                bluetoothDevice = null;
+                log('> Bluetooth Device reset');
+                document.querySelector('#reset').disabled = true; // disable reset button
+                document.querySelector('#selDevice').disabled = false;
+            }
+
+            async function onDisconnected() {
+                log('> Bluetooth Device disconnected');
+                try {
+                    await connectDeviceAndCacheCharacteristics()
+                } catch (error) {
+                    log('Error: ' + error);
+                }
+            }
+
+        </script>
+        <p></p>
+
+
+        <script>
+            document.querySelector('#selDevice').addEventListener('click', function () {
+                if (isWebBluetoothEnabled()) {
+                    onSelDeviceButtonClick();
+                }
+            });
+
+            document.querySelector('#clr').addEventListener('click', function (event) {
+                if (isWebBluetoothEnabled()) {
+                    onClrButtonClick();
+                }
+            });
+
+            document.querySelector('#reset').addEventListener('click', function (event) {
+                if (isWebBluetoothEnabled()) {
+                    ChromeSamples.clearLog();
+                    onResetButtonClick();
+                }
+            });
+        </script>
+
+        <script>
+            log = ChromeSamples.log;
+            clearLog = ChromeSamples.clearLog;
+
+            function isWebBluetoothEnabled() {
+                if (navigator.bluetooth) {
+                    return true;
+                } else {
+                    ChromeSamples.setStatus('Web Bluetooth API is not available.\n' +
+                        'Please make sure the "Experimental Web Platform features" flag is enabled.');
+                    return false;
+                }
+            }
+        </script>
+
+
+
+    </div>
+</body>
+
+</html>
