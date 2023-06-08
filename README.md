@@ -3,7 +3,9 @@
 ## ble-multimeter-app
 Used to provide remote access to the MP730624 multimeter display
 
-To use, click here --> [ble-multimeter-app](https://shabaz123.github.io/MP730624_tools/ble-multimeter-app/)
+To use, click here --> [ble-multimeter-app](https://shabaz123.github.io/MP730624_tools/ble-multimeter-app/) and then hit the "Meter Sel." button to select your Bluetooth multimeter device. 
+
+To turn on Bluetooth on the multimeter, hold down the **Hz/Duty/Bluetooth** button that is next to the rotary dial, on the right side of the meter.
 
 If you're on Android and wish to optionally install the app, click on the Install pop-up that appears when you go to that page. If the pop-up does not appear, then click on the top-right **three-dots menu** in Android Chrome, and then select **Install App** in the drop-down menu.
 
