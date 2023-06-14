@@ -25,6 +25,8 @@ Decoder based on Python code from baldengineer
                 sans-serif;
         }
 
+        .space { margin:0; padding:0; height:20px; }
+
         h1 {
             color: #ffffff;
         }
@@ -49,6 +51,16 @@ Decoder based on Python code from baldengineer
         }
 
         #id_topstatus {
+            border: 0;
+            font-size: 100%;
+            font: inherit;
+            vertical-align: baseline;
+            margin: 0;
+            padding: 0;
+            color: #b0b0b0;
+        }
+
+        #id_statstatus {
             border: 0;
             font-size: 100%;
             font: inherit;
@@ -98,6 +110,21 @@ Decoder based on Python code from baldengineer
         #id_meter1_value {
             background-color: #313131;
             font-size: 360%;
+        }
+
+        #id_min_value {
+            color: #ffffff;
+            background-color: #313131;
+        }
+
+        #id_max_value {
+            color: #ffffff;
+            background-color: #313131;
+        }
+
+        #id_mean_value {
+            color: #ffffff;
+            background-color: #313131;
         }
 
         #output {
@@ -243,18 +270,54 @@ Decoder based on Python code from baldengineer
         </script>
 
 
-        <div id="id_topstatus" class="text-center my-1">MP730624 Digital Multimeter 1</div>
+        <div id="id_topstatus" class="text-center my-1">Measurement</div>
         <div class="text-center">
             <div id="meterbox" class="jumbotron">
                 <h1 id="id_meter1_value" class="display-1 my-1">0</h1>
                 <p class="lead" id="units">-</p>
             </div>
         </div>
+        <div class="space"></div>
+        <div id="id_statstatus" class="text-center my-1">Statistics</div>
+        <div class="text-center">
+            <div id="statbox" class="jumbotron">
+                <table style="width:100%">
+                    <tr>
+                        <th class="text-muted">Min</th>
+                        <th class="text-muted">Mean</th>
+                        <th class="text-muted">Max</th>
+                      </tr>
+                    <tr>
+                      <td id="id_min_value" class="display-6">0</td>
+                      <td id="id_mean_value" class="display-6">0</td>
+                      <td id="id_max_value" class="display-6">0</td>
+                    </tr>
+                    <tr>
+                        <td id="id_min_unit" class="display-6 text-muted">-</td>
+                        <td id="id_mean_unit" class="display-6 text-muted">-</td>
+                        <td id="id_max_unit" class="display-6 text-muted">-</td>
+                      </tr>
+                  </table>
+            </div>
+        </div>
 
         <div class="m-4 text-center">
-            <button id="selDevice" class="btn btn-success mx-2">Meter Sel</button>
-            <button id="reset" class="btn btn-success mx-2" disabled=true>BLE Reset</button>
-            <button id="clr" class="btn btn-success mx-2">Clear Log</button>
+            <button id="selDevice" class="btn btn-success mx-2">
+                <span>Meter</span><br/>
+                <span>Select</span><br/>
+            </button>
+            <button id="reset" class="btn btn-success mx-2" disabled=true>
+                <span>BLE</span><br/>
+                <span>Reset</span><br/>
+            </button>
+            <button id="clr" class="btn btn-success mx-2">
+                <span>Clear</span><br/>
+                <span>Log &#x25BC</span><br/>
+            </button>
+            <button id="stat" class="btn btn-success mx-2">
+                <span>Clear &#x25B2</span><br/>
+                <span>Stats</span><br/>
+            </button>
         </div>
 
         <div class="m-4 text-center">
@@ -341,12 +404,44 @@ Decoder based on Python code from baldengineer
 
             var scroll_check = document.getElementById("id_scrollcheck");
 
+            stat = {
+                type: "NONE",
+                numsamples: 0,
+                sum: 0.0,
+                min: 0.0,
+                mean: 0.0,
+                max: 0.0
+            }
+
             for (var i = 0; i < dialcode_arr.length; i++) {
                 dial[dialcode_arr[i]] = dialdecode_arr[i];
             }
 
-            id_meter1_value.textContent = "----";
+            id_meter1_value.textContent = "-----";
+            id_min_value.textContent = "-----";
+            id_max_value.textContent = "-----";
+            id_mean_value.textContent = "-----";
 
+            // scale number to milli, mico, kilo, mega and return the result and the prefix
+            function scale_number(num) {
+                var prefix = "";
+                var result = num;
+                if (num > 1000000) {
+                    result = num / 1000000;
+                    prefix = "M";
+                } else if (num > 1000) {
+                    result = num / 1000;
+                    prefix = "k";
+                } else if (num < 0.001) {
+                    result = num * 1000;
+                    prefix = "m";
+                } else if (num < 0.000001) {
+                    result = num * 1000000;
+                    prefix = "u";
+                }
+                return [result, prefix];
+            }
+            
             async function onSelDeviceButtonClick() {
                 try {
                     if (!bluetoothDevice) {
@@ -467,11 +562,113 @@ Decoder based on Python code from baldengineer
                 }
                 id_meter1_value.textContent = meas_str + " " + meas_unit;
                 units.textContent = meas_type + " " + meas_maxval;
+                // stats display
+                std_unit = "";
+                if (meas_type=="DCV") {
+                    std_unit = "V";
+                } else if (meas_type=="DCI") {
+                    std_unit = "A";
+                } else if (meas_type=="ACV") {
+                    std_unit = "V";
+                } else if (meas_type=="ACI") {
+                    std_unit = "A";
+                } else if (meas_type=="RES") {
+                    std_unit = "Ω";
+                } else {
+                    std_unit = "";
+                }
+                // display the stats if we are in a mode that supports it
+                if (meas_type=="DCV" || meas_type=="DCI" || meas_type=="ACV" || meas_type=="ACI" || meas_type=="RES") {
+                    if (stat.meas_type != meas_type) {
+                        onStatButtonClick();
+                        stat.meas_type = meas_type;
+                    }
+                    if (do_overload == 0) {
+                        // get the current measurement in a standard unit (e.g. volts, amps, ohms)
+                        sampval = parseFloat(meas_str);
+                        mult = 1.0
+                        prefix = meas_unit.charAt(0);
+                        if (prefix == "m") {
+                            sampval = sampval / 1000.0;
+                            mult = 0.001;
+                        } else if (prefix == "k") {
+                            sampval = sampval * 1000.0;
+                            mult = 1000.0;
+                        } else if (prefix == "M") {
+                            sampval = sampval * 1000000.0;
+                            mult = 1000000.0;
+                        } else if (prefix == "u") {
+                            sampval = sampval / 1000000.0;
+                            mult = 0.000001;
+                        } else {
+                            prefix = "";
+                            mult = 1.0;
+                        }
+                        if (stat.numsamples == 0) { // first sample
+                            stat.min = sampval;
+                            stat.max = sampval;
+                            stat.sum = sampval;
+                            stat.numsamples = 1;
+                            stat.mean = sampval;
+                            stat.type = meas_type;
+                        } else {
+                            stat.min = Math.min(stat.min, sampval);
+                            stat.max = Math.max(stat.max, sampval);
+                            stat.sum = stat.sum + sampval;
+                            stat.numsamples = stat.numsamples + 1;
+                            stat.mean = stat.sum / stat.numsamples;
+                        }
+
+                        [val, prefix] = scale_number(stat.min);
+                        id_min_value.textContent = val.toFixed(5).slice(0,6);
+                        id_min_unit.textContent = prefix + std_unit;
+
+                        [val, prefix] = scale_number(stat.max);
+                        id_max_value.textContent = val.toFixed(5).slice(0,6);
+                        id_max_unit.textContent = prefix + std_unit;
+
+                        [val, prefix] = scale_number(stat.mean);
+                        id_mean_value.textContent = val.toFixed(5).slice(0,6);
+                        id_mean_unit.textContent = prefix + std_unit;
+                    }
+                } else {
+                    // we are in a mode that does not support stats, so clear the stats display
+                    id_min_value.textContent = "n/a";
+                    id_min_unit.textContent = "-";
+                    id_max_value.textContent = "n/a";
+                    id_max_unit.textContent = "-";
+                    id_mean_value.textContent = "n/a";
+                    id_mean_unit.textContent = "-";
+                    stat.numsamples = 0;
+                    stat.meas_type = "NONE";
+                }
+                
+                
                 nodataTimer = setTimeout(nodata_callback, 1000);
             }
 
             function onClrButtonClick() {
                 clearLog();
+            }
+
+            function onStatButtonClick() {
+                stat.min = 0.0;
+                stat.max = 0.0;
+                stat.sum = 0.0;
+                stat.numsamples = 0;
+                stat.mean = 0.0;
+                id_min_value.textContent = "-----";
+                id_min_unit.textContent = "-";
+                id_max_value.textContent = "-----";
+                id_max_unit.textContent = "-";
+                id_mean_value.textContent = "-----";
+                id_mean_unit.textContent = "-";
+                // log the action:
+                const dateobj = new Date(); // get timestamp
+                hr = ('00' + dateobj.getHours()).slice(-2);
+                min = ('00' + dateobj.getMinutes()).slice(-2);
+                sec = ('00' + dateobj.getSeconds()).slice(-2);
+                log(hr + ":" + min + ":" + sec + ",  Statistics cleared,  OK");   
             }
 
             function onResetButtonClick() {
@@ -516,6 +713,10 @@ Decoder based on Python code from baldengineer
                     ChromeSamples.clearLog();
                     onResetButtonClick();
                 }
+            });
+
+            document.querySelector('#stat').addEventListener('click', function (event) {
+                onStatButtonClick();
             });
         </script>
 
