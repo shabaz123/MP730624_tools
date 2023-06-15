@@ -431,16 +431,17 @@ Decoder based on Python code from baldengineer
             function scale_number(num) {
                 var prefix = "";
                 var result = num;
-                if (num > 1000000) {
+                var absnum = Math.abs(num);
+                if (absnum > 1000000) {
                     result = num / 1000000;
                     prefix = "M";
-                } else if (num > 1000) {
+                } else if (absnum > 1000) {
                     result = num / 1000;
                     prefix = "k";
-                } else if (num < 0.001) {
+                } else if (absnum < 0.001) {
                     result = num * 1000;
                     prefix = "m";
-                } else if (num < 0.000001) {
+                } else if (absnum < 0.000001) {
                     result = num * 1000000;
                     prefix = "u";
                 }
