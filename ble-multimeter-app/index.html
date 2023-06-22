@@ -73,6 +73,7 @@ Decoder based on Python code from baldengineer
         }
 
         #id_logtitle_check {
+            user-select: none;
             display: flex;
             justify-content: center;
         }
@@ -158,12 +159,12 @@ Decoder based on Python code from baldengineer
         }
 
         #status {
-            margin: .5em 0;
+            margin: 0.5em 0;
             font-style: italic;
         }
 
         #log {
-            margin: .5em 0;
+            margin: 0.5em 0;
             white-space: pre-wrap;
         }
     </style>
@@ -215,7 +216,7 @@ Decoder based on Python code from baldengineer
                 const searchParams = new URL(location).searchParams;
                 const inputs = Array.from(document.querySelectorAll('input[id]'));
 
-                inputs.forEach(input => {
+                inputs.forEach((input) => {
                     if (searchParams.has(input.id)) {
                         if (input.type == 'checkbox') {
                             input.checked = searchParams.get(input.id);
@@ -232,8 +233,13 @@ Decoder based on Python code from baldengineer
                             } else {
                                 newSearchParams.delete(input.id);
                             }
-                            history.replaceState({}, '', Array.from(newSearchParams).length ?
-                                location.pathname + '?' + newSearchParams : location.pathname);
+                            history.replaceState(
+                                {}, 
+                                '', 
+                                Array.from(newSearchParams).length 
+                                ? location.pathname + '?' + newSearchParams 
+                                : location.pathname
+                            );
                         });
                     } else {
                         input.addEventListener('input', function (event) {
@@ -243,8 +249,13 @@ Decoder based on Python code from baldengineer
                             } else {
                                 newSearchParams.delete(input.id);
                             }
-                            history.replaceState({}, '', Array.from(newSearchParams).length ?
-                                location.pathname + '?' + newSearchParams : location.pathname);
+                            history.replaceState(
+                                {}, 
+                                '', 
+                                Array.from(newSearchParams).length 
+                                ? location.pathname + '?' + newSearchParams 
+                                : location.pathname
+                            );
                         });
                     }
                 });
@@ -259,9 +270,12 @@ Decoder based on Python code from baldengineer
         <script>
             var ChromeSamples = {
                 log: function () {
-                    var line = Array.prototype.slice.call(arguments).map(function (argument) {
+                    var line = Array.prototype.slice
+                    .call(arguments)
+                    .map(function (argument) {
                         return typeof argument === 'string' ? argument : JSON.stringify(argument);
-                    }).join(' ');
+                    })
+                    .join(' ');
 
                     document.querySelector('#log').textContent += line + '\n';
                 },
@@ -280,7 +294,7 @@ Decoder based on Python code from baldengineer
                         content.removeChild(content.lastChild);
                     }
                     content.appendChild(newContent);
-                }
+                },
             };
         </script>
 
@@ -317,19 +331,19 @@ Decoder based on Python code from baldengineer
         </div>
 
         <div class="m-4 text-center buttonrow">
-            <button id="selDevice" class="btn btn-sm btn-success mx-2">
+            <button id="selDevice" class="btn btn-sm btn-success mx-2 mt-4">
                 <span>Meter</span><br/>
                 <span>Select</span><br/>
             </button>
-            <button id="reset" class="btn btn-sm btn-success mx-2" disabled=true>
+            <button id="reset" class="btn btn-sm btn-success mx-2 mt-4" disabled=true>
                 <span>BLE</span><br/>
                 <span>Reset</span><br/>
             </button>
-            <button id="clr" class="btn btn-sm btn-success mx-2">
+            <button id="clr" class="btn btn-sm btn-success mx-2 mt-4">
                 <span>Clear</span><br/>
                 <span>Log &#x25BC</span><br/>
             </button>
-            <button id="stat" class="btn btn-sm btn-success mx-2">
+            <button id="stat" class="btn btn-sm btn-success mx-2 mt-4">
                 <span>Clear &#x25B2</span><br/>
                 <span>Stats</span><br/>
             </button>
@@ -343,8 +357,13 @@ Decoder based on Python code from baldengineer
                     </td>
                     <td>
                         <div id="id_check" class="form-check align-middle">
-                            <input class="form-check-input align-middle" type="checkbox" value="" id="id_scrollcheck"
-                                checked>
+                            <input 
+                                class="form-check-input align-middle" 
+                                type="checkbox" 
+                                value="" 
+                                id="id_scrollcheck"
+                                checked
+                            />
                             <label class="form-check-label align-middle" for="id_scrollcheck">
                                 Auto-scroll
                             </label>
@@ -356,7 +375,7 @@ Decoder based on Python code from baldengineer
 
 
 
-            <div id="output" class="output">
+            <div id="output" class="output" style="max-width: 100%">
                 <div id="content"></div>
                 <div id="status"></div>
                 <pre id="log"></pre>
@@ -379,7 +398,8 @@ Decoder based on Python code from baldengineer
 
             var nodataTimer = null;
             
-            var dialcode_arr = [25840, 25584, 25328, 25072, 26608,
+            var dialcode_arr = [
+                25840, 25584, 25328, 25072, 26608,
                 9456, 9200, 8944, 8688, 10224,
                 23536, 23280, 24560,
                 7152, 6896, 8176,
@@ -394,10 +414,11 @@ Decoder based on Python code from baldengineer
                 54000, 53744, 37616, 37360, 38896, 55280,
                 56304, 56048, 39920, 39664, 40944, 57328,
                 58352, 41968,
-                41713, 44273, 44017, 43761, 46321, 46065
+                41713, 44273, 44017, 43761, 46321, 46065,
                 ];
 
-            var dialdecode_arr = ["ACV,V,1,2 V", "ACV,V,2,20 V", "ACV,V,3,200 V", "ACV,V,4,750 V", "ACV,over,1",
+            var dialdecode_arr = [
+                "ACV,V,1,2 V", "ACV,V,2,20 V", "ACV,V,3,200 V", "ACV,V,4,750 V", "ACV,over,1",
                 "DCV,V,1,2 V", "DCV,V,2,20 V", "DCV,V,3,200 V", "DCV,V,4,1000 V", "DCV,over,1",
                 "ACV,mV,2,20 mV", "ACV,mV,3,200 mV", "ACV,over,0",
                 "DCV,mV,2,20 mV", "DCV,mV,3,200 mV", "DCV,over,0",
@@ -412,7 +433,7 @@ Decoder based on Python code from baldengineer
                 "ACI,uA,3,200 uA", "ACI,uA,4,2000 uA", "DCI,uA,3,200 uA", "DCI,uA,4,2000 uA", "DCI,over,1", "ACI,over,1",
                 "ACI,mA,2,20 mA", "ACI,mA,3,200 mA", "DCI,mA,2,20 mA", "DCI,mA,3,200 mA", "DCI,over,0", "ACI,over,0",
                 "ACI,A,2,20 A", "DCI,A,2,20 A",
-                "FREQ,Hz,3,200 Hz", "FREQ,kHz,1,2 kHz", "FREQ,kHz,2,20 kHz", "FREQ,kHz,3,200 kHz", "FREQ,MHz,1,2 MHz", "FREQ,MHz,2,20 MHz"
+                "FREQ,Hz,3,200 Hz", "FREQ,kHz,1,2 kHz", "FREQ,kHz,2,20 kHz", "FREQ,kHz,3,200 kHz", "FREQ,MHz,1,2 MHz", "FREQ,MHz,2,20 MHz",
             ];
 
             var dial = {};
@@ -571,8 +592,14 @@ Decoder based on Python code from baldengineer
                 hr = ('00' + dateobj.getHours()).slice(-2);
                 min = ('00' + dateobj.getMinutes()).slice(-2);
                 sec = ('00' + dateobj.getSeconds()).slice(-2);
-                log(hr + ":" + min + ":" + sec + ",  " + meas_type + " [" + meas_maxval + "],  " + meas_str + " " + meas_unit);
-                if (scroll_check.checked == true) { // do auto-scroll
+                log(
+                    // this is a CSV style of format, so that it can be easily imported into a spreadsheet
+                    hr + ":" + min + ":" + sec + ",  " + 
+                    meas_type + " [" + meas_maxval + "],  " + 
+                    meas_str + " " + meas_unit
+                );
+                if (scroll_check.checked == true) { 
+                    // do auto-scroll
                     var logDiv = document.getElementById("output");
                     logDiv.scrollTop = logDiv.scrollHeight;
                 }
@@ -658,8 +685,7 @@ Decoder based on Python code from baldengineer
                     stat.numsamples = 0;
                     stat.meas_type = "NONE";
                 }
-                
-                
+        
                 nodataTimer = setTimeout(nodata_callback, 1000);
             }
 
@@ -688,7 +714,10 @@ Decoder based on Python code from baldengineer
             }
 
             function onResetButtonClick() {
-                SendReqCharacteristic.removeEventListener('characteristicvaluechanged', handleBleNotifications);
+                SendReqCharacteristic.removeEventListener(
+                    'characteristicvaluechanged', 
+                    handleBleNotifications
+                );
                 GetResCharacteristic = null;
                 SendReqCharacteristic = null;
                 // Note that it doesn't disconnect device.
