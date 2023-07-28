@@ -25,7 +25,11 @@ Decoder based on Python code from baldengineer
                 sans-serif;
         }
 
-        .space { margin:0; padding:0; height:20px; }
+        .space {
+            margin: 0;
+            padding: 0;
+            height: 20px;
+        }
 
         h1 {
             color: #ffffff;
@@ -106,7 +110,7 @@ Decoder based on Python code from baldengineer
             display: flex;
             justify-content: center;
         }
-        
+
         .jumbotron {
             user-select: none;
             position: relative;
@@ -166,6 +170,64 @@ Decoder based on Python code from baldengineer
         #log {
             margin: 0.5em 0;
             white-space: pre-wrap;
+        }
+
+        #overlay {
+            position: fixed;
+            display: none;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 2;
+            cursor: pointer;
+        }
+
+        blockquote,
+        p {
+            margin: 0;
+            padding: 0;
+        }
+
+        .l-quote {
+            position: relative;
+            width: 350px;
+            padding: 15px 25px 20px;
+            border-radius: 25px;
+            margin: 20px auto;
+            color: #fff;
+            background: #efac4e;
+        }
+
+        .quote {
+            &:after {
+                @include transform(skewX(-15deg));
+                content: "";
+                position: absolute;
+                top: 100%;
+                left: 85px;
+                border-width: 30px 30px 0 0;
+                border-style: solid;
+                border-color: #efac4e transparent;
+            }
+        }
+
+        blockquotetitle {
+            font: 18px / 1.3 Arial, san-serif;
+            color:rgb(0, 0, 0)
+        }
+
+        blockquotetiny {
+            font: 12px / 1.3 Arial, san-serif;
+            color:rgb(0, 0, 0)
+        }
+
+        blockquote {
+            font: 14px / 1.3 Arial, san-serif;
+            color:rgb(0, 0, 0)
         }
     </style>
     <script>
@@ -234,11 +296,11 @@ Decoder based on Python code from baldengineer
                                 newSearchParams.delete(input.id);
                             }
                             history.replaceState(
-                                {}, 
-                                '', 
-                                Array.from(newSearchParams).length 
-                                ? location.pathname + '?' + newSearchParams 
-                                : location.pathname
+                                {},
+                                '',
+                                Array.from(newSearchParams).length
+                                    ? location.pathname + '?' + newSearchParams
+                                    : location.pathname
                             );
                         });
                     } else {
@@ -250,11 +312,11 @@ Decoder based on Python code from baldengineer
                                 newSearchParams.delete(input.id);
                             }
                             history.replaceState(
-                                {}, 
-                                '', 
-                                Array.from(newSearchParams).length 
-                                ? location.pathname + '?' + newSearchParams 
-                                : location.pathname
+                                {},
+                                '',
+                                Array.from(newSearchParams).length
+                                    ? location.pathname + '?' + newSearchParams
+                                    : location.pathname
                             );
                         });
                     }
@@ -271,11 +333,11 @@ Decoder based on Python code from baldengineer
             var ChromeSamples = {
                 log: function () {
                     var line = Array.prototype.slice
-                    .call(arguments)
-                    .map(function (argument) {
-                        return typeof argument === 'string' ? argument : JSON.stringify(argument);
-                    })
-                    .join(' ');
+                        .call(arguments)
+                        .map(function (argument) {
+                            return typeof argument === 'string' ? argument : JSON.stringify(argument);
+                        })
+                        .join(' ');
 
                     document.querySelector('#log').textContent += line + '\n';
                 },
@@ -298,6 +360,22 @@ Decoder based on Python code from baldengineer
             };
         </script>
 
+        <!-- overlay help instructions at startup -->
+        <div id="overlay" onclick="overlay_off()">
+            <div class="l-quote quote">
+                <blockquotetitle><b>3-Step Instructions</b></blockquotetitle><br><blockquotetiny>Tap anywhere to close</blockquotetiny>
+                <blockquote>
+                    <p>
+                        <br>1. <b>Power on</b> your MP730624 multimeter<br><br>
+                        2. Hold down the <b>Bluetooth button</b> (it is to the right of the dial) for <b>two seconds</b><br><br>
+                        3. Tap the <b>Meter Select</b> icon in this app and select your multimeter from the list of Bluetooth
+                        devices that will appear<br>
+                        <br>That's it! You should now see the measurements from your multimeter appear in the app.
+                        <br><br> You can copy-paste the timestamped Data Log into a spreadsheet for further analysis.
+                    </p>
+                </blockquote>
+            </div>
+        </div>
 
         <div id="id_topstatus" class="text-center my-1">Measurement</div>
         <div class="text-center">
@@ -315,37 +393,37 @@ Decoder based on Python code from baldengineer
                         <th class="text-muted">Min</th>
                         <th class="text-muted">Mean</th>
                         <th class="text-muted">Max</th>
-                      </tr>
+                    </tr>
                     <tr>
-                      <td id="id_min_value" class="display-6">0</td>
-                      <td id="id_mean_value" class="display-6">0</td>
-                      <td id="id_max_value" class="display-6">0</td>
+                        <td id="id_min_value" class="display-6">0</td>
+                        <td id="id_mean_value" class="display-6">0</td>
+                        <td id="id_max_value" class="display-6">0</td>
                     </tr>
                     <tr>
                         <td id="id_min_unit" class="display-6 text-muted">-</td>
                         <td id="id_mean_unit" class="display-6 text-muted">-</td>
                         <td id="id_max_unit" class="display-6 text-muted">-</td>
-                      </tr>
-                  </table>
+                    </tr>
+                </table>
             </div>
         </div>
 
         <div class="m-4 text-center buttonrow">
             <button id="selDevice" class="btn btn-sm btn-success mx-2 mt-4">
-                <span>Meter</span><br/>
-                <span>Select</span><br/>
+                <span>Meter</span><br />
+                <span>Select</span><br />
             </button>
             <button id="reset" class="btn btn-sm btn-success mx-2 mt-4" disabled=true>
-                <span>BLE</span><br/>
-                <span>Reset</span><br/>
+                <span>BLE</span><br />
+                <span>Reset</span><br />
             </button>
             <button id="clr" class="btn btn-sm btn-success mx-2 mt-4">
-                <span>Clear</span><br/>
-                <span>Log &#x25BC</span><br/>
+                <span>Clear</span><br />
+                <span>Log &#x25BC</span><br />
             </button>
             <button id="stat" class="btn btn-sm btn-success mx-2 mt-4">
-                <span>Clear &#x25B2</span><br/>
-                <span>Stats</span><br/>
+                <span>Clear &#x25B2</span><br />
+                <span>Stats</span><br />
             </button>
         </div>
 
@@ -357,13 +435,8 @@ Decoder based on Python code from baldengineer
                     </td>
                     <td>
                         <div id="id_check" class="form-check align-middle">
-                            <input 
-                                class="form-check-input align-middle" 
-                                type="checkbox" 
-                                value="" 
-                                id="id_scrollcheck"
-                                checked
-                            />
+                            <input class="form-check-input align-middle" type="checkbox" value="" id="id_scrollcheck"
+                                checked />
                             <label class="form-check-label align-middle" for="id_scrollcheck">
                                 Auto-scroll
                             </label>
@@ -397,7 +470,7 @@ Decoder based on Python code from baldengineer
             var GetResCharacteristic;
 
             var nodataTimer = null;
-            
+
             var dialcode_arr = [
                 25840, 25584, 25328, 25072, 26608,
                 9456, 9200, 8944, 8688, 10224,
@@ -415,7 +488,7 @@ Decoder based on Python code from baldengineer
                 56304, 56048, 39920, 39664, 40944, 57328,
                 58352, 41968,
                 41713, 44273, 44017, 43761, 46321, 46065,
-                ];
+            ];
 
             var dialdecode_arr = [
                 "ACV,V,1,2 V", "ACV,V,2,20 V", "ACV,V,3,200 V", "ACV,V,4,750 V", "ACV,over,1",
@@ -435,6 +508,11 @@ Decoder based on Python code from baldengineer
                 "ACI,A,2,20 A", "DCI,A,2,20 A",
                 "FREQ,Hz,3,200 Hz", "FREQ,kHz,1,2 kHz", "FREQ,kHz,2,20 kHz", "FREQ,kHz,3,200 kHz", "FREQ,MHz,1,2 MHz", "FREQ,MHz,2,20 MHz",
             ];
+
+
+            function overlay_off() {
+                document.getElementById("overlay").style.display = "none";
+            }
 
             var dial = {};
 
@@ -478,7 +556,7 @@ Decoder based on Python code from baldengineer
                 }
                 return [result, prefix];
             }
-            
+
             async function onSelDeviceButtonClick() {
                 try {
                     if (!bluetoothDevice) {
@@ -594,11 +672,11 @@ Decoder based on Python code from baldengineer
                 sec = ('00' + dateobj.getSeconds()).slice(-2);
                 log(
                     // this is a CSV style of format, so that it can be easily imported into a spreadsheet
-                    hr + ":" + min + ":" + sec + ",  " + 
-                    meas_type + " [" + meas_maxval + "],  " + 
+                    hr + ":" + min + ":" + sec + ",  " +
+                    meas_type + " [" + meas_maxval + "],  " +
                     meas_str + " " + meas_unit
                 );
-                if (scroll_check.checked == true) { 
+                if (scroll_check.checked == true) {
                     // do auto-scroll
                     var logDiv = document.getElementById("output");
                     logDiv.scrollTop = logDiv.scrollHeight;
@@ -607,21 +685,21 @@ Decoder based on Python code from baldengineer
                 units.textContent = meas_type + " " + meas_maxval;
                 // stats display
                 std_unit = "";
-                if (meas_type=="DCV") {
+                if (meas_type == "DCV") {
                     std_unit = "V";
-                } else if (meas_type=="DCI") {
+                } else if (meas_type == "DCI") {
                     std_unit = "A";
-                } else if (meas_type=="ACV") {
+                } else if (meas_type == "ACV") {
                     std_unit = "V";
-                } else if (meas_type=="ACI") {
+                } else if (meas_type == "ACI") {
                     std_unit = "A";
-                } else if (meas_type=="RES") {
+                } else if (meas_type == "RES") {
                     std_unit = "Ω";
                 } else {
                     std_unit = "";
                 }
                 // display the stats if we are in a mode that supports it
-                if (meas_type=="DCV" || meas_type=="DCI" || meas_type=="ACV" || meas_type=="ACI" || meas_type=="RES") {
+                if (meas_type == "DCV" || meas_type == "DCI" || meas_type == "ACV" || meas_type == "ACI" || meas_type == "RES") {
                     if (stat.meas_type != meas_type) {
                         onStatButtonClick();
                         stat.meas_type = meas_type;
@@ -663,15 +741,15 @@ Decoder based on Python code from baldengineer
                         }
 
                         [val, prefix] = scale_number(stat.min);
-                        id_min_value.textContent = val.toFixed(5).slice(0,6);
+                        id_min_value.textContent = val.toFixed(5).slice(0, 6);
                         id_min_unit.textContent = prefix + std_unit;
 
                         [val, prefix] = scale_number(stat.max);
-                        id_max_value.textContent = val.toFixed(5).slice(0,6);
+                        id_max_value.textContent = val.toFixed(5).slice(0, 6);
                         id_max_unit.textContent = prefix + std_unit;
 
                         [val, prefix] = scale_number(stat.mean);
-                        id_mean_value.textContent = val.toFixed(5).slice(0,6);
+                        id_mean_value.textContent = val.toFixed(5).slice(0, 6);
                         id_mean_unit.textContent = prefix + std_unit;
                     }
                 } else {
@@ -685,7 +763,7 @@ Decoder based on Python code from baldengineer
                     stat.numsamples = 0;
                     stat.meas_type = "NONE";
                 }
-        
+
                 nodataTimer = setTimeout(nodata_callback, 1000);
             }
 
@@ -710,12 +788,12 @@ Decoder based on Python code from baldengineer
                 hr = ('00' + dateobj.getHours()).slice(-2);
                 min = ('00' + dateobj.getMinutes()).slice(-2);
                 sec = ('00' + dateobj.getSeconds()).slice(-2);
-                log(hr + ":" + min + ":" + sec + ",  Statistics cleared,  OK");   
+                log(hr + ":" + min + ":" + sec + ",  Statistics cleared,  OK");
             }
 
             function onResetButtonClick() {
                 SendReqCharacteristic.removeEventListener(
-                    'characteristicvaluechanged', 
+                    'characteristicvaluechanged',
                     handleBleNotifications
                 );
                 GetResCharacteristic = null;
@@ -762,6 +840,10 @@ Decoder based on Python code from baldengineer
             document.querySelector('#stat').addEventListener('click', function (event) {
                 onStatButtonClick();
             });
+
+            // display the overlay help text
+            document.getElementById("overlay").style.display = "block";
+
         </script>
 
         <script>
